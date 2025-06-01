@@ -1,0 +1,13 @@
+FROM base-env
+
+# 设置用户名
+ENV USER=user2
+ENV HOME=/workspace
+
+# 创建用户
+RUN useradd -m -s /bin/bash ${USER} && \
+    chown -R ${USER}:${USER} /workspace
+
+# 切换到用户
+USER ${USER}
+WORKDIR /workspace

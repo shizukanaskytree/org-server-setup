@@ -1,0 +1,20 @@
+FROM base-env
+
+# 设置用户名
+ENV USER=USERNAME
+ENV HOME=/workspace
+
+# 创建用户并设置权限
+RUN useradd -m -s /bin/bash ${USER} && \
+    chown -R ${USER}:${USER} /workspace && \
+    # 确保用户有必要的权限
+    usermod -aG sudo ${USER} && \
+    # 设置密码（实际密码会在容器启动时设置）
+    echo "${USER}:password" | chpasswd
+
+# 切换到用户
+USER ${USER}
+WORKDIR /workspace
+
+# 设置环境变量
+ENV PATH=$PATH:/workspace/.local/bin
