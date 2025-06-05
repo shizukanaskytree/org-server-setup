@@ -1,0 +1,441 @@
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % ssh -v -p 2201 user1@172.30.101.111
+OpenSSH_9.9p2, LibreSSL 3.3.6
+debug1: Reading configuration data /Users/woody/.ssh/config
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: /etc/ssh/ssh_config line 21: include /etc/ssh/ssh_config.d/* matched no files
+debug1: /etc/ssh/ssh_config line 54: Applying options for *
+debug1: /etc/ssh/ssh_config line 58: Applying options for *
+debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+debug1: Connecting to 172.30.101.111 [172.30.101.111] port 2201.
+debug1: connect to address 172.30.101.111 port 2201: Connection refused
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh -v -p 2201 user1@172.30.101.111
+OpenSSH_9.9p2, LibreSSL 3.3.6
+debug1: Reading configuration data /Users/woody/.ssh/config
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: /etc/ssh/ssh_config line 21: include /etc/ssh/ssh_config.d/* matched no files
+debug1: /etc/ssh/ssh_config line 54: Applying options for *
+debug1: /etc/ssh/ssh_config line 58: Applying options for *
+debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+debug1: Connecting to 172.30.101.111 [172.30.101.111] port 2201.
+debug1: connect to address 172.30.101.111 port 2201: Connection refused
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 16:26:25 2025 from 2.0.1.1
+user1-session
+
+NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
+   insufficient for CUDA.  NVIDIA recommends the use of the following flags:
+   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
+
+sshd: no hostkeys available -- exiting.
+Error: Command failed at line 45
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 21:55:12 2025 from 2.0.1.1
+user1-session
+
+==========
+== CUDA ==
+==========
+
+NVIDIA Release  (build )
+CUDA Version 12.8.1.012
+Container image Copyright (c) 2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+Various files include modifications (c) NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+
+GOVERNING TERMS: The software and materials are governed by the NVIDIA Software License Agreement
+(found at https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/)
+and the Product-Specific Terms for NVIDIA AI Products
+(found at https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/).
+
+NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
+   insufficient for CUDA.  NVIDIA recommends the use of the following flags:
+   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
+
+sshd: no hostkeys available -- exiting.
+Error: Command failed at line 44
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 21:58:56 2025 from 2.0.1.1
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+
+user1@user1-session:~/work$
+user1@user1-session:~/work$
+user1@user1-session:~/work$
+user1@user1-session:~/work$
+user1@user1-session:~/work$ exit
+logout
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 22:38:17 2025 from 2.0.1.1
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+
+user1@user1-session:~/work$ exit
+logout
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 22:40:59 2025 from 2.0.1.1
+Error response from daemon: Container a3251f37e152f5a771f4cf12b427f335dc9b4d23e9d101d042bd4492a8226d61 is restarting, wait until the container is running
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 22:51:37 2025 from 2.0.1.1
+Error response from daemon: Container a3251f37e152f5a771f4cf12b427f335dc9b4d23e9d101d042bd4492a8226d61 is restarting, wait until the container is running
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 22:51:49 2025 from 2.0.1.1
+Error response from daemon: Container 41e60c9112aa44dfd24227a263275797f5e7be2eca5dc517a8478ba50cefa771 is restarting, wait until the container is running
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh user1@172.30.101.111
+user1@172.30.101.111's password:
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+49 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+15 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+15 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+*** System restart required ***
+Last login: Thu Jun  5 22:57:13 2025 from 2.0.1.1
+Error response from daemon: Container 5f96ad3c82d126121a6ca5b12d6da8eff654b7f0c0c058370fdc549a743120c5 is restarting, wait until the container is running
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % ssh -p 2201 user1@172.30.101.111
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % ssh -p 2201 user1@172.30.101.111
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % touch ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ % chmod 600 ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % chmod 600 ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % chmod 600 ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+ssh: connect to host 172.30.101.111 port 2201: Connection refused
+(base) woody@Woodys-MacBook-Pro ~ % cat ~/.ssh/lab_user1_key
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACClzRzE8ZIb37I+s1AzuBIz83fdZROXTBTFOcsy9uFU/gAAAJg0aZt/NGmb
+fwAAAAtzc2gtZWQyNTUxOQAAACClzRzE8ZIb37I+s1AzuBIz83fdZROXTBTFOcsy9uFU/g
+AAAEBD+tihCNy4f70Zi8fd0WEaDF5PMp49fGf61Et9RuPqkqXNHMTxkhvfsj6zUDO4EjPz
+d91lE5dMFMU5yzL24VT+AAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----%
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % cat ~/.ssh/lab_user1_key
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/SgAAAJh+FXwFfhV8
+BQAAAAtzc2gtZWQyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/Sg
+AAAEB9mkokOhw86a1DfVaIPVGUHh5hJyV+YyiTiJeabFhtyGaSITaQRAPVKv7GHnscIZDl
+TP6mkshZAEKew3oySj9KAAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----%
+(base) woody@Woodys-MacBook-Pro ~ % chmod 600 ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+The authenticity of host '[172.30.101.111]:2201 ([172.30.101.111]:2201)' can't be established.
+ED25519 key fingerprint is SHA256:PZQjkiQ2ftUOE6UuMfbrUmkjR1lIWrDEWUj9JEQeHfI.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '[172.30.101.111]:2201' (ED25519) to the list of known hosts.
+Load key "/Users/woody/.ssh/lab_user1_key": invalid format
+user1@172.30.101.111: Permission denied (publickey).
+(base) woody@Woodys-MacBook-Pro ~ % cat ~/.ssh/lab_user1_key
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/SgAAAJh+FXwFfhV8
+BQAAAAtzc2gtZWQyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/Sg
+AAAEB9mkokOhw86a1DfVaIPVGUHh5hJyV+YyiTiJeabFhtyGaSITaQRAPVKv7GHnscIZDl
+TP6mkshZAEKew3oySj9KAAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----%
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % cat ~/.ssh/lab_user1_key
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/SgAAAJh+FXwFfhV8
+BQAAAAtzc2gtZWQyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/Sg
+AAAEB9mkokOhw86a1DfVaIPVGUHh5hJyV+YyiTiJeabFhtyGaSITaQRAPVKv7GHnscIZDl
+TP6mkshZAEKew3oySj9KAAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----%
+(base) woody@Woodys-MacBook-Pro ~ % cat ~/.ssh/lab_user1_key
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/SgAAAJh+FXwFfhV8
+BQAAAAtzc2gtZWQyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/Sg
+AAAEB9mkokOhw86a1DfVaIPVGUHh5hJyV+YyiTiJeabFhtyGaSITaQRAPVKv7GHnscIZDl
+TP6mkshZAEKew3oySj9KAAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----
+(base) woody@Woodys-MacBook-Pro ~ % chmod 600 ~/.ssh/lab_user1_key
+(base) woody@Woodys-MacBook-Pro ~ %
+(base) woody@Woodys-MacBook-Pro ~ % ssh lab-user1
+Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.11.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+user1@user1-session:~$
+user1@user1-session:~$
+user1@user1-session:~$
+user1@user1-session:~$
+user1@user1-session:~$ pwd
+/home/user1
+user1@user1-session:~$ cd ..
+user1@user1-session:/home$ ls
+ubuntu  user1
+user1@user1-session:/home$ tree
+-bash: tree: command not found
+user1@user1-session:/home$ exit
+logout
+Connection to 172.30.101.111 closed.
+(base) woody@Woodys-MacBook-Pro ~ %

@@ -1,0 +1,1427 @@
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ cat Dockerfile.base
+# Dockerfile.base
+FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04
+
+# 安装必要的工具
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    curl \
+    wget \
+    git \
+    sudo \
+    python3-pip \
+    python3-venv \
+    nodejs \
+    npm \
+    openssh-server \
+    tmux \
+    htop \
+    vim \
+    nano \
+    less \
+    net-tools \
+    iputils-ping \
+ && rm -rf /var/lib/apt/lists/*
+
+# 配置SSH服务
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+# 安装Miniconda
+ENV CONDA_DIR=/opt/conda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+ && bash miniconda.sh -b -p $CONDA_DIR \
+ && rm miniconda.sh
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+# 创建Conda环境
+RUN conda init bash && \
+    conda create -n py312 python=3.12 -y && \
+    /bin/bash -c "source $CONDA_DIR/etc/profile.d/conda.sh && conda activate py312 && \
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 && \
+        conda install -y numpy pandas matplotlib && \
+        pip install pylint autopep8 black jupyter ipykernel && \
+        conda clean -afy"
+
+# 设置工作目录
+WORKDIR /workspace
+
+# 复制入口脚本
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/sbin/sshd", "-D"](base) wxf@wxf-R8280:/data1/slurm_prj/ds$ cat Dockerfile.user.template
+# Dockerfile.user.template
+ARG USERNAME
+ARG USER_UID
+ARG USER_GID
+
+FROM base-env
+
+# 创建用户和组
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+    && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# 设置用户SSH目录
+RUN mkdir -p /home/${USERNAME}/.ssh && \
+    chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}/.ssh && \
+    chmod 700 /home/${USERNAME}/.ssh
+
+# 设置用户环境
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}
+ENV HOME /home/${USERNAME}(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ cat entrypoint.sh
+#!/bin/bash
+# entrypoint.sh
+
+# 生成SSH主机密钥
+if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
+    ssh-keygen -A
+fi
+
+# 设置用户SSH密钥
+if [ -n "$USER" ]; then
+    # 确保 .ssh 目录存在
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+
+    # 如果公钥文件不存在，生成新的密钥对
+    if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+        ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N ""
+    fi
+
+    # 确保 authorized_keys 包含公钥
+    if [ ! -f "$HOME/.ssh/authorized_keys" ] || ! grep -q "$(cat "$HOME/.ssh/id_ed25519.pub")" "$HOME/.ssh/authorized_keys"; then
+        cat "$HOME/.ssh/id_ed25519.pub" >> "$HOME/.ssh/authorized_keys"
+    fi
+
+    # 设置权限
+    chmod 700 "$HOME/.ssh"
+    chmod 600 "$HOME/.ssh/authorized_keys" 2>/dev/null || true
+    chmod 600 "$HOME/.ssh/id_ed25519" 2>/dev/null || true
+    chmod 644 "$HOME/.ssh/id_ed25519.pub" 2>/dev/null || true
+fi
+
+# 执行CMD
+exec "$@"(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+Creating necessary directories...
+Created user: user1
+Password for user1: f4rvHZBoN49vn2UO
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Saving key "/home/user1/.ssh/id_ed25519" failed: Permission denied
+Error: Command failed at line 74
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+Creating necessary directories...
+Password for user1: FjtNXQI29dLZ9XZL
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user1/.ssh/id_ed25519
+Your public key has been saved in /home/user1/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:ngvr0KyAbfUcGwomc2+egO3+8KS/zQXWb1Id44lnkas user1@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|                 |
+|             .   |
+|            =    |
+|       .   + *   |
+|o + . = S o B    |
+| X + B * + +     |
+|o B * B = E      |
+| o X * + +       |
+| .+oOo= .        |
++----[SHA256]-----+
+Created user: user2
+Password for user2: aeqQIPhHhagLfB3x
+Generating SSH key for host user user2...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user2/.ssh/id_ed25519
+Your public key has been saved in /home/user2/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:277yyouxd/KQ91KdNZC27T3A96LZuZBExFzV1tyLWoE user2@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|           oo.oo=|
+|           Eo=  *|
+|            + *..|
+|           . * =.|
+|        S   +.+o+|
+|         + o..+oo|
+|      . + o.o+ o.|
+|       =++o.o.o  |
+|      o.+O=o. .. |
++----[SHA256]-----+
+Created user: user3
+Password for user3: 1fH3mBEZxojnOARZ
+Generating SSH key for host user user3...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user3/.ssh/id_ed25519
+Your public key has been saved in /home/user3/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:FA9d7Sm663hBDhcQrwVPRM2uZCEpb1+kJiRk99gZxVc user3@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|     .o BB=*o. .E|
+|     .o.+%+o= o  |
+|       =o.O* o . |
+|       .=oB + o  |
+|       .S@ + .   |
+|          *      |
+|           o     |
+|         .o      |
+|        .oo.     |
++----[SHA256]-----+
+Building base environment image...
+[+] Building 4.3s (13/13) FINISHED                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile.base                                                                                        0.1s
+ => => transferring dockerfile: 1.65kB                                                                                                           0.0s
+ => [internal] load metadata for nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04                                                  1.6s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [internal] load build context                                                                                                                0.1s
+ => => transferring context: 526B                                                                                                                0.0s
+ => [1/8] FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04@sha256:05c84acd04946a1f7217c84c9e7bcc8bd6eae0a15928402432fcb3a6be  0.0s
+ => CACHED [2/8] RUN apt-get update && apt-get install -y     software-properties-common     curl     wget     git     sudo     python3-pip      0.0s
+ => CACHED [3/8] RUN mkdir /var/run/sshd &&     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config &&     s  0.0s
+ => CACHED [4/8] RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh  && bash miniconda.sh -b -p /op  0.0s
+ => CACHED [5/8] RUN conda init bash &&     conda create -n py312 python=3.12 -y &&     /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh   0.0s
+ => CACHED [6/8] WORKDIR /workspace                                                                                                              0.0s
+ => [7/8] COPY entrypoint.sh /entrypoint.sh                                                                                                      0.3s
+ => [8/8] RUN chmod +x /entrypoint.sh                                                                                                            0.7s
+ => exporting to image                                                                                                                           0.6s
+ => => exporting layers                                                                                                                          0.4s
+ => => writing image sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848                                                     0.0s
+ => => naming to docker.io/library/base-env                                                                                                      0.0s
+Creating image for user1 (UID=1005, GID=1005)...
+[+] Building 1.9s (5/7)                                                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 741B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [1/4] FROM docker.io/library/base-env:latest                                                                                                 0.5s
+ => ERROR [2/4] RUN groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo "$  0.7s
+------
+ > [2/4] RUN groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}     && chmod 0440 /etc/sudoers.d/${USERNAME}:
+0.513 groupadd: option requires an argument -- 'g'
+0.513 Usage: groupadd [options] GROUP
+0.513
+0.513 Options:
+0.513   -f, --force                   exit successfully if the group already exists,
+0.513                                 and cancel -g if the GID is already used
+0.513   -g, --gid GID                 use GID for the new group
+0.513   -h, --help                    display this help message and exit
+0.513   -K, --key KEY=VALUE           override /etc/login.defs defaults
+0.513   -o, --non-unique              allow to create groups with duplicate
+0.513                                 (non-unique) GID
+0.513   -p, --password PASSWORD       use this encrypted password for the new group
+0.513   -r, --system                  create a system account
+0.513   -R, --root CHROOT_DIR         directory to chroot into
+0.513   -P, --prefix PREFIX_DI        directory prefix
+0.513   -U, --users USERS             list of user members of this group
+0.513       --extrausers              Use the extra users database
+0.513
+------
+
+ 5 warnings found (use docker --debug to expand):
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 16)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 23)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 24)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 25)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 25)
+Dockerfile:10
+--------------------
+   9 |     # 创建用户和组
+  10 | >>> RUN groupadd -g ${USER_GID} ${USERNAME} \
+  11 | >>>     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME} \
+  12 | >>>     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+  13 | >>>     && chmod 0440 /etc/sudoers.d/${USERNAME}
+  14 |
+--------------------
+ERROR: failed to solve: process "/bin/sh -c groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/${USERNAME}     && chmod 0440 /etc/sudoers.d/${USERNAME}" did not complete successfully: exit code: 2
+Error: Command failed at line 124
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo rm -rf /opt/docker_images
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rm -f user1-container user2-container user3-container 2>/dev/null || true
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rmi -f user1-env user2-env user3-env base-env 2>/dev/null || true
+Untagged: base-env:latest
+Deleted: sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+--- Initial check: Docker version ---
+Docker version 28.0.4, build b8034c0
+------------------------------------
+Creating necessary directories...
+User user1 exists, removing first for a clean run...
+userdel: user1 mail spool (/var/mail/user1) not found
+Created user: user1
+Password for user1: mS4GeRNYjX3+2Ft6
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user1/.ssh/id_ed25519
+Your public key has been saved in /home/user1/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:1UwO+J+MCcE0z6OIs56DL1Q9SBsQTw9LizNqBZdKNBQ user1@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|oE++=  oo.. .    |
+| .+*o=  ++ *     |
+|. =o+=.  o= +    |
+| o.o+.o..o..     |
+|.. .o ..S. = .   |
+|. .  o    o +    |
+| . ..            |
+|  o...           |
+|   o+.           |
++----[SHA256]-----+
+User user2 exists, removing first for a clean run...
+userdel: user2 mail spool (/var/mail/user2) not found
+Created user: user2
+Password for user2: AfKuJCxiizySGQsM
+Generating SSH key for host user user2...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user2/.ssh/id_ed25519
+Your public key has been saved in /home/user2/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:aiSoO89F7rb7WBqYn+PoUcL9S9KhG3OV6J8kEpLDlFc user2@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|      E          |
+|   . .           |
+|  o .            |
+| + =   . .       |
+|  O * + S        |
+| . X O +         |
+|. + X @ .        |
+|.o *o/ = .       |
+|.+=o@=o o        |
++----[SHA256]-----+
+User user3 exists, removing first for a clean run...
+userdel: user3 mail spool (/var/mail/user3) not found
+Created user: user3
+Password for user3: RFbJ40+SydudkvBB
+Generating SSH key for host user user3...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user3/.ssh/id_ed25519
+Your public key has been saved in /home/user3/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:iekzZi9YfFWJZ7uorkisV4V+TBIO2eR/XQEQrOZoIu8 user3@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|     +.  .o+.o.  |
+|    o.o   o =  . |
+|     o.o . + ..  |
+|      ++=.....   |
+|     ooOS.....   |
+|  ....B =.. .    |
+|   oo**o .       |
+|   o++.+.        |
+|  .oE .+o        |
++----[SHA256]-----+
+Building base environment image...
+[+] Building 1.8s (13/13) FINISHED                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile.base                                                                                        0.1s
+ => => transferring dockerfile: 1.65kB                                                                                                           0.0s
+ => [internal] load metadata for nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04                                                  0.8s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [internal] load build context                                                                                                                0.1s
+ => => transferring context: 35B                                                                                                                 0.0s
+ => [1/8] FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04@sha256:05c84acd04946a1f7217c84c9e7bcc8bd6eae0a15928402432fcb3a6be  0.0s
+ => CACHED [2/8] RUN apt-get update && apt-get install -y     software-properties-common     curl     wget     git     sudo     python3-pip      0.0s
+ => CACHED [3/8] RUN mkdir /var/run/sshd &&     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config &&     s  0.0s
+ => CACHED [4/8] RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh  && bash miniconda.sh -b -p /op  0.0s
+ => CACHED [5/8] RUN conda init bash &&     conda create -n py312 python=3.12 -y &&     /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh   0.0s
+ => CACHED [6/8] WORKDIR /workspace                                                                                                              0.0s
+ => CACHED [7/8] COPY entrypoint.sh /entrypoint.sh                                                                                               0.0s
+ => CACHED [8/8] RUN chmod +x /entrypoint.sh                                                                                                     0.0s
+ => exporting to image                                                                                                                           0.1s
+ => => exporting layers                                                                                                                          0.0s
+ => => writing image sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848                                                     0.0s
+ => => naming to docker.io/library/base-env                                                                                                      0.1s
+DEBUG: For user 'user1', found UID='1008' and GID='1008'
+Creating image for user1 (UID=1008, GID=1008)...
+--- Generated Dockerfile for user1: ---
+# User-specific Dockerfile
+ARG USERNAME
+ARG USER_UID
+ARG USER_GID
+ARG USER_SSH_KEY
+
+FROM base-env
+
+# [DEBUG] Print ARGs received by Docker
+RUN echo "[DEBUG] In-Docker-Build values:" && \
+    echo "[DEBUG] USERNAME is ->'${USERNAME}'<-" && \
+    echo "[DEBUG] USER_UID is ->'${USER_UID}'<-" && \
+    echo "[DEBUG] USER_GID is ->'${USER_GID}'<-"
+
+# 创建用户和组
+RUN groupadd -g ${USER_GID} ${USERNAME} \
+    && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# 设置用户SSH环境
+USER ${USERNAME}
+RUN mkdir -p /home/${USERNAME}/.ssh && \
+    echo "${USER_SSH_KEY}" > /home/${USERNAME}/.ssh/authorized_keys && \
+    chmod 700 /home/${USERNAME}/.ssh && \
+    chmod 600 /home/${USERNAME}/.ssh/authorized_keys
+
+# 切换回用户
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}
+ENV HOME /home/${USERNAME}
+---------------------------------------------
+--- Executing Docker Build Command: ---
++ docker build --build-arg USERNAME=user1 --build-arg USER_UID=1008 --build-arg USER_GID=1008 --build-arg 'USER_SSH_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2XOH+gv+ypLlnJlDlWkntYq8p4dmsqfb9uagSgRgYB user1@wxf-R8280' -t user1-env /opt/docker_images/user1
+[+] Building 2.1s (6/8)                                                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 987B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/5] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/5] RUN echo "[DEBUG] In-Docker-Build values:" &&     echo "[DEBUG] USERNAME is ->'${USERNAME}'<-" &&     echo "[DEBUG] USER_UID is ->'${  0.6s
+ => ERROR [3/5] RUN groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo "$  0.7s
+------
+ > [3/5] RUN groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}     && chmod 0440 /etc/sudoers.d/${USERNAME}:
+0.599 groupadd: option requires an argument -- 'g'
+0.599 Usage: groupadd [options] GROUP
+0.599
+0.599 Options:
+0.599   -f, --force                   exit successfully if the group already exists,
+0.599                                 and cancel -g if the GID is already used
+0.599   -g, --gid GID                 use GID for the new group
+0.599   -h, --help                    display this help message and exit
+0.599   -K, --key KEY=VALUE           override /etc/login.defs defaults
+0.599   -o, --non-unique              allow to create groups with duplicate
+0.599                                 (non-unique) GID
+0.599   -p, --password PASSWORD       use this encrypted password for the new group
+0.599   -r, --system                  create a system account
+0.599   -R, --root CHROOT_DIR         directory to chroot into
+0.599   -P, --prefix PREFIX_DI        directory prefix
+0.599   -U, --users USERS             list of user members of this group
+0.599       --extrausers              Use the extra users database
+0.599
+------
+
+ 5 warnings found (use docker --debug to expand):
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 22)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 29)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 30)
+ - UndefinedVar: Usage of undefined variable '$USERNAME' (line 31)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 31)
+Dockerfile:16
+--------------------
+  15 |     # 创建用户和组
+  16 | >>> RUN groupadd -g ${USER_GID} ${USERNAME} \
+  17 | >>>     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME} \
+  18 | >>>     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+  19 | >>>     && chmod 0440 /etc/sudoers.d/${USERNAME}
+  20 |
+--------------------
+ERROR: failed to solve: process "/bin/sh -c groupadd -g ${USER_GID} ${USERNAME}     && useradd -u ${USER_UID} -g ${USER_GID} -m -s /bin/bash ${USERNAME}     && echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/${USERNAME}     && chmod 0440 /etc/sudoers.d/${USERNAME}" did not complete successfully: exit code: 2
+++ echo 'Error: Command failed at line 137'
+Error: Command failed at line 137
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo rm -rf /opt/docker_images
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rm -f user1-container user2-container user3-container 2>/dev/null || true
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rmi -f user1-env user2-env user3-env base-env 2>/dev/null || true
+Untagged: base-env:latest
+Deleted: sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+Creating necessary directories...
+Created user: user1
+Password for user1: IzRj+Trh4z29pCEG
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user1/.ssh/id_ed25519
+Your public key has been saved in /home/user1/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:zXQP5ulutcSx1D+9gDTndcen84GvqNmcKj6jBUiSAOc user1@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|+ .              |
+|.o.              |
+| oE.      . +  o |
+|  o .    + * =o.*|
+|   . .  S + Bo++*|
+|      .    o +Boo|
+|       .    .oo++|
+|      .+  +.+ .o.|
+|     .o.++o*...  |
++----[SHA256]-----+
+Created user: user2
+Password for user2: qxcDvBLr+Sw8khkR
+Generating SSH key for host user user2...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user2/.ssh/id_ed25519
+Your public key has been saved in /home/user2/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:aDFThS8+NelmBJ8QhaEYax6Tn27+vpUjFdrd+tG4LMM user2@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|    .   +Bo      |
+|     = o=        |
+|    B =  =.o     |
+|   o + *.oOo .   |
+|    . =.S=o.. .  |
+|     o  o.+. . o |
+|      o .++.. o .|
+|     o   o .Eo o |
+|      .o+.   o+  |
++----[SHA256]-----+
+Created user: user3
+Password for user3: PHTwJAeze+CzYMRj
+Generating SSH key for host user user3...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user3/.ssh/id_ed25519
+Your public key has been saved in /home/user3/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:jrjHvg6x6a5VedLorh+I4gS4ZI0HghGXV7J+FGRRUwI user3@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|o....oE++..      |
+|.o. .+ . o       |
+|o. .. .          |
+|o +. . +         |
+|o+ oo * S        |
+|+... X =         |
+|o.. B.+ .        |
+|o. o +o.         |
+| ..o=**.         |
++----[SHA256]-----+
+Building base environment image...
+[+] Building 1.8s (13/13) FINISHED                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile.base                                                                                        0.1s
+ => => transferring dockerfile: 1.65kB                                                                                                           0.0s
+ => [internal] load metadata for nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04                                                  0.8s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [1/8] FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04@sha256:05c84acd04946a1f7217c84c9e7bcc8bd6eae0a15928402432fcb3a6be  0.0s
+ => [internal] load build context                                                                                                                0.1s
+ => => transferring context: 35B                                                                                                                 0.0s
+ => CACHED [2/8] RUN apt-get update && apt-get install -y     software-properties-common     curl     wget     git     sudo     python3-pip      0.0s
+ => CACHED [3/8] RUN mkdir /var/run/sshd &&     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config &&     s  0.0s
+ => CACHED [4/8] RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh  && bash miniconda.sh -b -p /op  0.0s
+ => CACHED [5/8] RUN conda init bash &&     conda create -n py312 python=3.12 -y &&     /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh   0.0s
+ => CACHED [6/8] WORKDIR /workspace                                                                                                              0.0s
+ => CACHED [7/8] COPY entrypoint.sh /entrypoint.sh                                                                                               0.0s
+ => CACHED [8/8] RUN chmod +x /entrypoint.sh                                                                                                     0.0s
+ => exporting to image                                                                                                                           0.1s
+ => => exporting layers                                                                                                                          0.0s
+ => => writing image sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848                                                     0.0s
+ => => naming to docker.io/library/base-env                                                                                                      0.0s
+Creating image for user1 (UID=1011, GID=1011)...
+--- Generated Dockerfile for user1 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1011 user1 \
+    && useradd -u 1011 -g 1011 -m -s /bin/bash user1 \
+    && echo "user1 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user1 \
+    && chmod 0440 /etc/sudoers.d/user1
+
+# 设置用户SSH环境
+USER user1
+RUN mkdir -p /home/user1/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGjjwbzOBJS4jmby2ZRr24FsqLhWyOS+FeMPaaAgpSt3 user1@wxf-R8280" > /home/user1/.ssh/authorized_keys && \
+    chmod 700 /home/user1/.ssh && \
+    chmod 600 /home/user1/.ssh/authorized_keys
+
+# 切换回用户
+USER user1
+WORKDIR /home/user1
+ENV HOME /home/user1
+--------------------------------------------------------
+[+] Building 4.3s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/4] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/4] RUN groupadd -g 1011 user1     && useradd -u 1011 -g 1011 -m -s /bin/bash user1     && echo "user1 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.2s
+ => [3/4] RUN mkdir -p /home/user1/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGjjwbzOBJS4jmby2ZRr24FsqLhWyOS+FeMPaaAgpSt3 user1@wxf  0.8s
+ => [4/4] WORKDIR /home/user1                                                                                                                    0.4s
+ => exporting to image                                                                                                                           0.9s
+ => => exporting layers                                                                                                                          0.7s
+ => => writing image sha256:ce6ffb5e5f0ac237da40f366943a6699a9df7a6f0f7ba7e9d16631d9f6e96c98                                                     0.0s
+ => => naming to docker.io/library/user1-env                                                                                                     0.0s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating image for user2 (UID=1012, GID=1012)...
+--- Generated Dockerfile for user2 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1012 user2 \
+    && useradd -u 1012 -g 1012 -m -s /bin/bash user2 \
+    && echo "user2 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user2 \
+    && chmod 0440 /etc/sudoers.d/user2
+
+# 设置用户SSH环境
+USER user2
+RUN mkdir -p /home/user2/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4tDmqHMfU58PTEBCf3J6WyadxFji/I7ZWens13tKPL user2@wxf-R8280" > /home/user2/.ssh/authorized_keys && \
+    chmod 700 /home/user2/.ssh && \
+    chmod 600 /home/user2/.ssh/authorized_keys
+
+# 切换回用户
+USER user2
+WORKDIR /home/user2
+ENV HOME /home/user2
+--------------------------------------------------------
+[+] Building 4.0s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/4] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/4] RUN groupadd -g 1012 user2     && useradd -u 1012 -g 1012 -m -s /bin/bash user2     && echo "user2 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.2s
+ => [3/4] RUN mkdir -p /home/user2/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4tDmqHMfU58PTEBCf3J6WyadxFji/I7ZWens13tKPL user2@wxf  0.7s
+ => [4/4] WORKDIR /home/user2                                                                                                                    0.4s
+ => exporting to image                                                                                                                           0.8s
+ => => exporting layers                                                                                                                          0.6s
+ => => writing image sha256:8ff5feb9d2900000a208a19e7eb96cef096c902615b5404b442f77eb403f924a                                                     0.0s
+ => => naming to docker.io/library/user2-env                                                                                                     0.0s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating image for user3 (UID=1013, GID=1013)...
+--- Generated Dockerfile for user3 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1013 user3 \
+    && useradd -u 1013 -g 1013 -m -s /bin/bash user3 \
+    && echo "user3 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user3 \
+    && chmod 0440 /etc/sudoers.d/user3
+
+# 设置用户SSH环境
+USER user3
+RUN mkdir -p /home/user3/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGnIITM5lK1kjtH6R8wokRzPULB956slVq76+TCFXUWe user3@wxf-R8280" > /home/user3/.ssh/authorized_keys && \
+    chmod 700 /home/user3/.ssh && \
+    chmod 600 /home/user3/.ssh/authorized_keys
+
+# 切换回用户
+USER user3
+WORKDIR /home/user3
+ENV HOME /home/user3
+--------------------------------------------------------
+[+] Building 4.1s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/4] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/4] RUN groupadd -g 1013 user3     && useradd -u 1013 -g 1013 -m -s /bin/bash user3     && echo "user3 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.2s
+ => [3/4] RUN mkdir -p /home/user3/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGnIITM5lK1kjtH6R8wokRzPULB956slVq76+TCFXUWe user3@wxf  0.8s
+ => [4/4] WORKDIR /home/user3                                                                                                                    0.3s
+ => exporting to image                                                                                                                           0.9s
+ => => exporting layers                                                                                                                          0.7s
+ => => writing image sha256:f6c13fd4ea8eab496c7dd79e828867ce52636c029d39b096851f1516aa9ee3a0                                                     0.0s
+ => => naming to docker.io/library/user3-env                                                                                                     0.0s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating container for user1 on GPU 0, SSH port 2201
+44b94fe72e6299d76f166ef713ecce3ad4763afcb712ab174eebabb420e7e21b
+Creating container for user2 on GPU 1, SSH port 2202
+646a91ffe63bfe0a10da7841a399b2fa3c00daf773038747a3b632cb2181d4d6
+Creating container for user3 on GPU 2, SSH port 2203
+c9a6c4b0a1b3714e295d9505c2ef13bdcb5fd436111ce317b3c6aeb74034fc96
+Installation script finished.
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo cat /home/user1/.ssh/id_ed25519
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBo48G8zgSUuI5m8tmUa9uBbKi4VsjkvhXjD2mgIKUrdwAAAJg4BSDkOAUg
+5AAAAAtzc2gtZWQyNTUxOQAAACBo48G8zgSUuI5m8tmUa9uBbKi4VsjkvhXjD2mgIKUrdw
+AAAEAviqL01PsS5CE/ltE5I8JySspJMHh0+9WA87ez4cJYW2jjwbzOBJS4jmby2ZRr24Fs
+qLhWyOS+FeMPaaAgpSt3AAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+
+
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker ps
+CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS                         PORTS     NAMES
+c9a6c4b0a1b3   user3-env   "/entrypoint.sh /usr…"   8 minutes ago   Restarting (1) 5 seconds ago             user3-container
+646a91ffe63b   user2-env   "/entrypoint.sh /usr…"   8 minutes ago   Restarting (1) 6 seconds ago             user2-container
+44b94fe72e62   user1-env   "/entrypoint.sh /usr…"   8 minutes ago   Restarting (1) 8 seconds ago             user1-container
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker logs user1-container
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo ss -tulpn | grep 2201
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker logs user1-container
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+sshd: no hostkeys available -- exiting.
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo ufw status
+Status: inactive
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo firewall-cmd --list-all
+sudo: firewall-cmd: command not found
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rm -f user1-container user2-container user3-container 2>/dev/null || true
+user1-container
+user2-container
+user3-container
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rmi -f user1-env user2-env user3-env base-env 2>/dev/null || true
+Untagged: user1-env:latest
+Deleted: sha256:ce6ffb5e5f0ac237da40f366943a6699a9df7a6f0f7ba7e9d16631d9f6e96c98
+Untagged: user2-env:latest
+Deleted: sha256:8ff5feb9d2900000a208a19e7eb96cef096c902615b5404b442f77eb403f924a
+Untagged: user3-env:latest
+Deleted: sha256:f6c13fd4ea8eab496c7dd79e828867ce52636c029d39b096851f1516aa9ee3a0
+Untagged: base-env:latest
+Deleted: sha256:a521a26bd36a7f492b5ebcd15828b7027428170e9c7c80109b4ec88cd7212848
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo rm -rf /opt/docker_images
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+Creating necessary directories...
+Created user: user1
+Password for user1: zcAi+OBZvhUM4jxx
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user1/.ssh/id_ed25519
+Your public key has been saved in /home/user1/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:YO0l2HQil7Bm2L02XcC6RitFbt5BgxXZw8d0eHgGVGI user1@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|      o.+=== +E=o|
+|     o X+o=.+.=o+|
+|    . Oo=o...o + |
+|     + o*=..     |
+|       =S+..     |
+|      ..=..      |
+|       o         |
+|                 |
+|                 |
++----[SHA256]-----+
+Created user: user2
+Password for user2: zou+P6CyrNJix0hK
+Generating SSH key for host user user2...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user2/.ssh/id_ed25519
+Your public key has been saved in /home/user2/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:z3Dw7DaDcC2sgRrLGHy81EuSH1x04o4ABifJ7w21veI user2@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|=+.    o .       |
+|o+.  .o o        |
+|  ... oo.        |
+|. .o=o+o =       |
+|..o*+*o.S =      |
+| +o==oo* O       |
+|. +..oo . B      |
+|     E   . o     |
+|                 |
++----[SHA256]-----+
+Created user: user3
+Password for user3: cO7oWlA98GXI0hms
+Generating SSH key for host user user3...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user3/.ssh/id_ed25519
+Your public key has been saved in /home/user3/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:st+dYuJUdGo1yrq7LYxaVxHGj4oyJk5Mwy3rhhm27oU user3@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|         .o      |
+|         ...     |
+| . .      oo+    |
+|  = .    o.*..   |
+| o +  ..S.B      |
+|..* + .o.=       |
+|.E.+ ooo+        |
+|o.=  ..+++o. .   |
+|o+  .. .**o.o    |
++----[SHA256]-----+
+Building base environment image...
+[+] Building 4.5s (13/13) FINISHED                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile.base                                                                                        0.1s
+ => => transferring dockerfile: 1.65kB                                                                                                           0.0s
+ => [internal] load metadata for nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04                                                  1.7s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [1/8] FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04@sha256:05c84acd04946a1f7217c84c9e7bcc8bd6eae0a15928402432fcb3a6be  0.0s
+ => [internal] load build context                                                                                                                0.1s
+ => => transferring context: 720B                                                                                                                0.0s
+ => CACHED [2/8] RUN apt-get update && apt-get install -y     software-properties-common     curl     wget     git     sudo     python3-pip      0.0s
+ => CACHED [3/8] RUN mkdir /var/run/sshd &&     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config &&     s  0.0s
+ => CACHED [4/8] RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh  && bash miniconda.sh -b -p /op  0.0s
+ => CACHED [5/8] RUN conda init bash &&     conda create -n py312 python=3.12 -y &&     /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh   0.0s
+ => CACHED [6/8] WORKDIR /workspace                                                                                                              0.0s
+ => [7/8] COPY entrypoint.sh /entrypoint.sh                                                                                                      0.3s
+ => [8/8] RUN chmod +x /entrypoint.sh                                                                                                            0.8s
+ => exporting to image                                                                                                                           0.6s
+ => => exporting layers                                                                                                                          0.4s
+ => => writing image sha256:bf5534de6aca616938487d89ae1c1c67d7ffec2f01dd997efd657a6a0bb28c72                                                     0.0s
+ => => naming to docker.io/library/base-env                                                                                                      0.0s
+Creating image for user1 (UID=1014, GID=1014)...
+--- Generated Dockerfile for user1 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1014 user1 \
+    && useradd -u 1014 -g 1014 -m -s /bin/bash user1 \
+    && echo "user1 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user1 \
+    && chmod 0440 /etc/sudoers.d/user1
+
+# 设置用户SSH环境
+USER user1
+RUN mkdir -p /home/user1/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXNHMTxkhvfsj6zUDO4EjPzd91lE5dMFMU5yzL24VT+ user1@wxf-R8280" > /home/user1/.ssh/authorized_keys && \
+    chmod 700 /home/user1/.ssh && \
+    chmod 600 /home/user1/.ssh/authorized_keys
+
+# 切换回用户
+USER user1
+WORKDIR /home/user1
+ENV HOME /home/user1
+--------------------------------------------------------
+[+] Building 5.0s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [1/4] FROM docker.io/library/base-env:latest                                                                                                 0.4s
+ => [2/4] RUN groupadd -g 1014 user1     && useradd -u 1014 -g 1014 -m -s /bin/bash user1     && echo "user1 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.3s
+ => [3/4] RUN mkdir -p /home/user1/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXNHMTxkhvfsj6zUDO4EjPzd91lE5dMFMU5yzL24VT+ user1@wxf  0.9s
+ => [4/4] WORKDIR /home/user1                                                                                                                    0.6s
+ => exporting to image                                                                                                                           0.7s
+ => => exporting layers                                                                                                                          0.5s
+ => => writing image sha256:8bacd6a2bc0ee91032a5722b92514850175ef1214ac4f89c97cc9c9aa88c3e40                                                     0.0s
+ => => naming to docker.io/library/user1-env                                                                                                     0.1s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating image for user2 (UID=1015, GID=1015)...
+--- Generated Dockerfile for user2 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1015 user2 \
+    && useradd -u 1015 -g 1015 -m -s /bin/bash user2 \
+    && echo "user2 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user2 \
+    && chmod 0440 /etc/sudoers.d/user2
+
+# 设置用户SSH环境
+USER user2
+RUN mkdir -p /home/user2/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE+EGpWpQy1C2AocsA+uqLL9M+cWIERYmXbk02YLDa+T user2@wxf-R8280" > /home/user2/.ssh/authorized_keys && \
+    chmod 700 /home/user2/.ssh && \
+    chmod 600 /home/user2/.ssh/authorized_keys
+
+# 切换回用户
+USER user2
+WORKDIR /home/user2
+ENV HOME /home/user2
+--------------------------------------------------------
+[+] Building 4.4s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/4] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/4] RUN groupadd -g 1015 user2     && useradd -u 1015 -g 1015 -m -s /bin/bash user2     && echo "user2 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.2s
+ => [3/4] RUN mkdir -p /home/user2/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE+EGpWpQy1C2AocsA+uqLL9M+cWIERYmXbk02YLDa+T user2@wxf  0.9s
+ => [4/4] WORKDIR /home/user2                                                                                                                    0.5s
+ => exporting to image                                                                                                                           0.7s
+ => => exporting layers                                                                                                                          0.5s
+ => => writing image sha256:24ac0597d44aba9a518c3291bf16badc94bd26e553f630f0c0f630fbfdd2d36f                                                     0.0s
+ => => naming to docker.io/library/user2-env                                                                                                     0.1s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating image for user3 (UID=1016, GID=1016)...
+--- Generated Dockerfile for user3 (Workaround): ---
+# User-specific Dockerfile (Workaround Version)
+# Variables are hardcoded by install.sh
+
+FROM base-env
+
+# 使用由shell替换好的、硬编码的值来创建用户和组
+RUN groupadd -g 1016 user3 \
+    && useradd -u 1016 -g 1016 -m -s /bin/bash user3 \
+    && echo "user3 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user3 \
+    && chmod 0440 /etc/sudoers.d/user3
+
+# 设置用户SSH环境
+USER user3
+RUN mkdir -p /home/user3/.ssh && \
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDDD9oMuX4LOYlVepPGZJ/dNTugQ3nG4HTlPv3zULTIY user3@wxf-R8280" > /home/user3/.ssh/authorized_keys && \
+    chmod 700 /home/user3/.ssh && \
+    chmod 600 /home/user3/.ssh/authorized_keys
+
+# 切换回用户
+USER user3
+WORKDIR /home/user3
+ENV HOME /home/user3
+--------------------------------------------------------
+[+] Building 4.4s (8/8) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 775B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/4] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/4] RUN groupadd -g 1016 user3     && useradd -u 1016 -g 1016 -m -s /bin/bash user3     && echo "user3 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.3s
+ => [3/4] RUN mkdir -p /home/user3/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDDD9oMuX4LOYlVepPGZJ/dNTugQ3nG4HTlPv3zULTIY user3@wxf  0.8s
+ => [4/4] WORKDIR /home/user3                                                                                                                    0.6s
+ => exporting to image                                                                                                                           0.8s
+ => => exporting layers                                                                                                                          0.6s
+ => => writing image sha256:f137a839bfa3b876884826e48d92fd700b6ad259fe443a4b3865328def817222                                                     0.0s
+ => => naming to docker.io/library/user3-env                                                                                                     0.0s
+
+ 1 warning found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 22)
+Creating container for user1 on GPU 0, SSH port 2201
+416274ca4f198101980e51536bc2e34522a1109b6a1ea6186de7b14ba88f3837
+Creating container for user2 on GPU 1, SSH port 2202
+b36b66c3189370f720ae767cf1eed1337e3e6aea69a8259a40e6eff0bdd59a95
+Creating container for user3 on GPU 2, SSH port 2203
+9a84754253a95efec34fa4430c50f62836cb3e5df14d3978a86215154ef9350c
+Installation script finished.
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo cat /home/user1/.ssh/id_ed25519
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACClzRzE8ZIb37I+s1AzuBIz83fdZROXTBTFOcsy9uFU/gAAAJg0aZt/NGmb
+fwAAAAtzc2gtZWQyNTUxOQAAACClzRzE8ZIb37I+s1AzuBIz83fdZROXTBTFOcsy9uFU/g
+AAAEBD+tihCNy4f70Zi8fd0WEaDF5PMp49fGf61Et9RuPqkqXNHMTxkhvfsj6zUDO4EjPz
+d91lE5dMFMU5yzL24VT+AAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker ps -a
+CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS                                  PORTS     NAMES
+9a84754253a9   user3-env   "/entrypoint.sh /usr…"   4 minutes ago   Restarting (1) 57 seconds ago                     user3-container
+b36b66c31893   user2-env   "/entrypoint.sh /usr…"   4 minutes ago   Restarting (1) 59 seconds ago                     user2-container
+416274ca4f19   user1-env   "/entrypoint.sh /usr…"   4 minutes ago   Restarting (1) Less than a second ago             user1-container
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo ss -tulpn | grep docker
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ ssh -p 2201 user1@localhost
+ssh: connect to host localhost port 2201: Connection refused
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ ls -ld /etc/ssh
+drwxr-xr-x 4 root root 4096 Apr 26 06:25 /etc/ssh
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker run -it --rm --entrypoint /bin/bash user1-env
+user1@dab4c771b495:~$ ls -ld /etc/ssh
+drwxr-xr-x 1 root root 4096 Jun  5 15:34 /etc/ssh
+user1@dab4c771b495:~$ ssh-keygen -A
+user1@dab4c771b495:~$ ls -l /etc/ssh
+total 652
+-rw-r--r-- 1 root root 620042 Apr 22 11:51 moduli
+-rw-r--r-- 1 root root   1649 Apr 22 11:51 ssh_config
+drwxr-xr-x 2 root root   4096 Apr 22 11:51 ssh_config.d
+-rw------- 1 root root    513 Jun  5 15:33 ssh_host_ecdsa_key
+-rw-r--r-- 1 root root    182 Jun  5 15:33 ssh_host_ecdsa_key.pub
+-rw------- 1 root root    411 Jun  5 15:33 ssh_host_ed25519_key
+-rw-r--r-- 1 root root    102 Jun  5 15:33 ssh_host_ed25519_key.pub
+-rw------- 1 root root   2610 Jun  5 15:33 ssh_host_rsa_key
+-rw-r--r-- 1 root root    574 Jun  5 15:33 ssh_host_rsa_key.pub
+-rw-r--r-- 1 root root    342 Dec  7  2020 ssh_import_id
+-rw-r--r-- 1 root root   3236 Jun  5 15:34 sshd_config
+drwxr-xr-x 2 root root   4096 Apr 22 11:51 sshd_config.d
+user1@dab4c771b495:~$ /usr/sbin/sshd -D -e
+sshd: no hostkeys available -- exiting.
+user1@dab4c771b495:~$ exit
+exit
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rm -f user1-container user2-container user3-container 2>/dev/null || true
+user1-container
+user2-container
+user3-container
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo docker rmi -f user1-env user2-env user3-env base-env 2>/dev/null || true
+Untagged: user1-env:latest
+Deleted: sha256:8bacd6a2bc0ee91032a5722b92514850175ef1214ac4f89c97cc9c9aa88c3e40
+Untagged: user2-env:latest
+Deleted: sha256:24ac0597d44aba9a518c3291bf16badc94bd26e553f630f0c0f630fbfdd2d36f
+Untagged: user3-env:latest
+Deleted: sha256:f137a839bfa3b876884826e48d92fd700b6ad259fe443a4b3865328def817222
+Untagged: base-env:latest
+Deleted: sha256:bf5534de6aca616938487d89ae1c1c67d7ffec2f01dd997efd657a6a0bb28c72
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo rm -rf /opt/docker_images
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo bash install.sh
+Creating necessary directories...
+Created user: user1
+Password for user1: fYSOrXx4DGgImDOa
+Generating SSH key for host user user1...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user1/.ssh/id_ed25519
+Your public key has been saved in /home/user1/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:cN92H56JvpFTZ3oEEVwHXw8qlpOCfoRoRU16uOfV56g user1@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|     .oo.    .=++|
+|     o =.  o ..++|
+|    o * = * . . o|
+|   . . * + =   . |
+|      o S o + oo+|
+|       + . . ====|
+|        .   .=o+o|
+|           .. o. |
+|          E  o.  |
++----[SHA256]-----+
+Created user: user2
+Password for user2: yRJ7V0yG8O4aHZwj
+Generating SSH key for host user user2...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user2/.ssh/id_ed25519
+Your public key has been saved in /home/user2/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:qdzeJ4Y+VmIlRL9XvLtxVyx41+6dhPWtxyM5KFzdFFM user2@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|       ..       E|
+|        ..   . o |
+|       .  .   o o|
+|        .... o +.|
+|        So. + *.=|
+|     . oo .o oo*+|
+|      o.o+. ..+o*|
+|       .++o..+.B*|
+|       ooooo  =o+|
++----[SHA256]-----+
+Created user: user3
+Password for user3: VFPsc8IlcUEMn57G
+Generating SSH key for host user user3...
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/user3/.ssh/id_ed25519
+Your public key has been saved in /home/user3/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:ea8Wds6IDVnE986afzpscw1lg0RUrmsuAKmmIg7xbqs user3@wxf-R8280
+The key's randomart image is:
++--[ED25519 256]--+
+|         .  oo.. |
+|          o ...  |
+|        .. ..... |
+|       o ..  .o.o|
+|.     . So.  + o.|
+| o   o  ooo.. =  |
+|. . o    =.*.* ..|
+|oo..    . +oB = +|
+|E++.     .. .+o* |
++----[SHA256]-----+
+Building base environment image...
+[+] Building 2.5s (13/13) FINISHED                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile.base                                                                                        0.1s
+ => => transferring dockerfile: 1.65kB                                                                                                           0.0s
+ => [internal] load metadata for nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04                                                  1.5s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => [internal] load build context                                                                                                                0.1s
+ => => transferring context: 35B                                                                                                                 0.0s
+ => [1/8] FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04@sha256:05c84acd04946a1f7217c84c9e7bcc8bd6eae0a15928402432fcb3a6be  0.0s
+ => CACHED [2/8] RUN apt-get update && apt-get install -y     software-properties-common     curl     wget     git     sudo     python3-pip      0.0s
+ => CACHED [3/8] RUN mkdir /var/run/sshd &&     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config &&     s  0.0s
+ => CACHED [4/8] RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh  && bash miniconda.sh -b -p /op  0.0s
+ => CACHED [5/8] RUN conda init bash &&     conda create -n py312 python=3.12 -y &&     /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh   0.0s
+ => CACHED [6/8] WORKDIR /workspace                                                                                                              0.0s
+ => CACHED [7/8] COPY entrypoint.sh /entrypoint.sh                                                                                               0.0s
+ => CACHED [8/8] RUN chmod +x /entrypoint.sh                                                                                                     0.0s
+ => exporting to image                                                                                                                           0.1s
+ => => exporting layers                                                                                                                          0.0s
+ => => writing image sha256:bf5534de6aca616938487d89ae1c1c67d7ffec2f01dd997efd657a6a0bb28c72                                                     0.0s
+ => => naming to docker.io/library/base-env                                                                                                      0.0s
+Creating image for user1 (UID=1017, GID=1017)...
+[+] Building 3.9s (7/7) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 757B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/3] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/3] RUN groupadd -g 1017 user1     && useradd -u 1017 -g 1017 -m -s /bin/bash user1     && echo "user1 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.4s
+ => [3/3] RUN mkdir -p /home/user1/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaSITaQRAPVKv7GHnscIZDlTP6mkshZAEKew3oySj9K user1@wxf  0.8s
+ => exporting to image                                                                                                                           0.7s
+ => => exporting layers                                                                                                                          0.4s
+ => => writing image sha256:6108acda761f276c4c850a7cb40f85d945752328c6fae6794b87b54789069e8a                                                     0.0s
+ => => naming to docker.io/library/user1-env                                                                                                     0.1s
+Creating image for user2 (UID=1018, GID=1018)...
+[+] Building 3.7s (7/7) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 757B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/3] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/3] RUN groupadd -g 1018 user2     && useradd -u 1018 -g 1018 -m -s /bin/bash user2     && echo "user2 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.4s
+ => [3/3] RUN mkdir -p /home/user2/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMSrjTRhmRPfXz0OgDlJasKlYFnSohYofO/vMP4slS6F user2@wxf  0.8s
+ => exporting to image                                                                                                                           0.7s
+ => => exporting layers                                                                                                                          0.4s
+ => => writing image sha256:05ec406fc1c7ed9cd0d05af5c17e5e3954fbbc481faca0c22cfc7c015c867b69                                                     0.0s
+ => => naming to docker.io/library/user2-env                                                                                                     0.1s
+Creating image for user3 (UID=1019, GID=1019)...
+[+] Building 3.9s (7/7) FINISHED                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                             0.1s
+ => => transferring dockerfile: 757B                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/base-env:latest                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                0.1s
+ => => transferring context: 2B                                                                                                                  0.0s
+ => CACHED [1/3] FROM docker.io/library/base-env:latest                                                                                          0.0s
+ => [2/3] RUN groupadd -g 1019 user3     && useradd -u 1019 -g 1019 -m -s /bin/bash user3     && echo "user3 ALL=(ALL) NOPASSWD:ALL" > /etc/sud  1.3s
+ => [3/3] RUN mkdir -p /home/user3/.ssh &&     echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ+CBX7+wJOsH+MCFjig5rLGI2KXgmRjwGkDUtPb7OrC user3@wxf  0.9s
+ => exporting to image                                                                                                                           0.7s
+ => => exporting layers                                                                                                                          0.5s
+ => => writing image sha256:4222a45a4432a721418041d429519e6568f5aba2270f71e91f92f778f640c86a                                                     0.0s
+ => => naming to docker.io/library/user3-env                                                                                                     0.1s
+Creating container for user1 on GPU 0, SSH port 2201
+912aca5f632e3aecad550dea742a1ac49110c2ae543ad2f145ae00c3a1381ed6
+Creating container for user2 on GPU 1, SSH port 2202
+80d4c91caaa4b16f173fb1d1d6a627d837d0e592a21677305136395b5b5a6fc3
+Creating container for user3 on GPU 2, SSH port 2203
+4a2ab9a02a6e9885e1ddcb7fe8965296a1bd1866462897bbcdb647e9ab9aa341
+Installation script finished. The setup should now be complete and correct.
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ sudo cat /home/user1/.ssh/id_ed25519
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/SgAAAJh+FXwFfhV8
+BQAAAAtzc2gtZWQyNTUxOQAAACBmkiE2kEQD1Sr+xh57HCGQ5Uz+ppLIWQBCnsN6Mko/Sg
+AAAEB9mkokOhw86a1DfVaIPVGUHh5hJyV+YyiTiJeabFhtyGaSITaQRAPVKv7GHnscIZDl
+TP6mkshZAEKew3oySj9KAAAAD3VzZXIxQHd4Zi1SODI4MAECAwQFBg==
+-----END OPENSSH PRIVATE KEY-----
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$
+(base) wxf@wxf-R8280:/data1/slurm_prj/ds$ cd ..
+(base) wxf@wxf-R8280:/data1/slurm_prj$ ls
+gemini  org-server-setup  prj_demo
+(base) wxf@wxf-R8280:/data1/slurm_prj$ cd org-server-setup/
+(base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$ ls
+Dockerfile.base  Dockerfile.user.template  entrypoint.sh  install.sh
+(base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$ cat Dockerfile.base
+# Dockerfile.base
+FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04
+
+# 安装必要的工具
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    curl \
+    wget \
+    git \
+    sudo \
+    python3-pip \
+    python3-venv \
+    nodejs \
+    npm \
+    openssh-server \
+    tmux \
+    htop \
+    vim \
+    nano \
+    less \
+    net-tools \
+    iputils-ping \
+ && rm -rf /var/lib/apt/lists/*
+
+# 配置SSH服务
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+# 安装Miniconda
+ENV CONDA_DIR=/opt/conda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+ && bash miniconda.sh -b -p $CONDA_DIR \
+ && rm miniconda.sh
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+# 创建Conda环境
+RUN conda init bash && \
+    conda create -n py312 python=3.12 -y && \
+    /bin/bash -c "source $CONDA_DIR/etc/profile.d/conda.sh && conda activate py312 && \
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 && \
+        conda install -y numpy pandas matplotlib && \
+        pip install pylint autopep8 black jupyter ipykernel && \
+        conda clean -afy"
+
+# 设置工作目录
+WORKDIR /workspace
+
+# 复制入口脚本
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/sbin/sshd", "-D"](base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$ cat Dockerfile.user.template
+# Dockerfile.user.template
+ARG USERNAME
+ARG USER_UID
+ARG USER_GID
+
+FROM base-env
+
+# 创建用户和组
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+    && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# 设置用户SSH目录
+RUN mkdir -p /home/${USERNAME}/.ssh && \
+    chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}/.ssh && \
+    chmod 700 /home/${USERNAME}/.ssh
+
+# 设置用户环境
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}
+ENV HOME /home/${USERNAME}(base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$ cat entrypoint.sh
+#!/bin/bash
+# entrypoint.sh (v3 - Robust Host Key Generation)
+
+# 脚本任意一步出错则立即退出
+set -e
+
+echo "[Entrypoint] Starting container setup..."
+
+# 不再使用 if 检查，而是直接、无条件地运行 ssh-keygen -A。
+# 这个命令是幂等的，如果密钥已存在，它不会做任何事或报错。
+# 这样做更简单，也更能保证密钥一定存在。
+echo "[Entrypoint] Ensuring SSH host keys are present..."
+ssh-keygen -A
+
+echo "[Entrypoint] SSH host keys are ready."
+echo "[Entrypoint] Starting SSH daemon..."
+
+# 执行 Dockerfile 中定义的 CMD 命令 (即启动 sshd 服务)
+# exec "$@" 会将当前进程替换为 "$@" 命令
+exec "$@"(base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$ cat install.sh
+#!/bin/bash
+# install.sh (v6 - The Final Fix)
+
+# 设置错误处理
+set -e
+trap 'echo "Error: Command failed at line $LINENO"' ERR
+
+# 检查是否以root运行
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit 1
+fi
+
+# 创建必要的目录
+echo "Creating necessary directories..."
+mkdir -p /opt/docker_images
+mkdir -p /data1/org/user_workspaces
+
+# 创建用户并配置
+for i in {1..3}; do
+    username="user${i}"
+    user_home="/home/$username"
+
+    # 用 -r 选项确保完全删除旧用户
+    if id "$username" &>/dev/null; then
+        userdel -r "$username" 2>/dev/null || true
+    fi
+
+    useradd -m -s /bin/bash "$username"
+    echo "Created user: $username"
+
+    password="$(openssl rand -base64 12 | tr -d '=')"
+    echo "$username:$password" | chpasswd
+    echo "Password for $username: $password"
+
+    usermod -aG docker "$username"
+
+    user_work_dir="/data1/org/user_workspaces/$username"
+    mkdir -p "$user_work_dir"
+    chown "$username":"$username" "$user_work_dir"
+    chmod 700 "$user_work_dir"
+
+    ln -sf "$user_work_dir" "$user_home/work"
+
+    docker_name="${username}-container"
+    cat > "$user_home/.bash_profile" <<EOF
+if [ -z "\$INSIDE_DOCKER" ]; then
+    echo "You are on the host. To enter your Docker container, run:"
+    echo "docker exec -it ${docker_name} bash --login"
+fi
+EOF
+    chown "$username":"$username" "$user_home/.bash_profile"
+
+    # 在宿主机上为用户创建SSH密钥
+    mkdir -p "$user_home/.ssh"
+    chown "$username":"$username" "$user_home/.ssh"
+    chmod 700 "$user_home/.ssh"
+    if [ ! -f "$user_home/.ssh/id_ed25519" ]; then
+        echo "Generating SSH key for host user $username..."
+        sudo -u "$username" ssh-keygen -t ed25519 -f "$user_home/.ssh/id_ed25519" -N ""
+    fi
+done
+
+# 构建基础镜像
+echo "Building base environment image..."
+docker build -t base-env -f Dockerfile.base .
+
+# 为每个用户创建镜像
+for i in {1..3}; do
+    username="user${i}"
+    uid=$(id -u "$username")
+    gid=$(id -g "$username")
+    user_pubkey=$(cat "/home/$username/.ssh/id_ed25519.pub")
+
+    echo "Creating image for $username (UID=$uid, GID=$gid)..."
+    image_dir="/opt/docker_images/$username"
+    mkdir -p "$image_dir"
+    dockerfile_path="$image_dir/Dockerfile"
+
+    # --- [最终修正] ---
+    # 删除了所有的 `USER` 指令。让容器以 root 身份启动 sshd 服务。
+    cat > "$dockerfile_path" <<EOF
+# User-specific Dockerfile (Final Version)
+FROM base-env
+
+# 创建用户和组 (以 root 权限)
+RUN groupadd -g ${gid} ${username} \\
+    && useradd -u ${uid} -g ${gid} -m -s /bin/bash ${username} \\
+    && echo "${username} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${username} \\
+    && chmod 0440 /etc/sudoers.d/${username}
+
+# 创建用户的 SSH 环境 (仍然以 root 权限)
+RUN mkdir -p /home/${username}/.ssh && \\
+    echo "${user_pubkey}" > /home/${username}/.ssh/authorized_keys && \\
+    chown -R ${uid}:${gid} /home/${username}/.ssh && \\
+    chmod 700 /home/${username}/.ssh && \\
+    chmod 600 /home/${username}/.ssh/authorized_keys
+
+# 不再需要 USER, WORKDIR, ENV 指令，sshd 会自动处理
+EOF
+
+    # 构建命令
+    docker build -t "${username}-env" "$image_dir"
+done
+
+# 创建并启动用户容器
+for i in {1..3}; do
+    username="user${i}"
+    docker_name="${username}-container"
+    ssh_port=$((2200 + i))
+
+    case $i in
+        1) gpu_device="0" ;;
+        2) gpu_device="1" ;;
+        3) gpu_device="2" ;;
+    esac
+
+    if docker ps -a --format '{{.Names}}' | grep -q "^${docker_name}$"; then
+        docker rm -f "$docker_name" >/dev/null 2>&1 || true
+    fi
+
+    echo "Creating container for $username on GPU $gpu_device, SSH port $ssh_port"
+    docker run -dit \
+        --name "$docker_name" \
+        --hostname "${username}-session" \
+        --restart unless-stopped \
+        --gpus "device=$gpu_device" \
+        --cpus=8 \
+        --memory=64g \
+        --ipc=host \
+        -v "/data1/org/user_workspaces/$username:/home/$username/work" \
+        -p "${ssh_port}:22" \
+        "${username}-env"
+        # 注意：这里不再需要 CMD，因为它已经在 base Dockerfile 中定义了
+done
+
+echo "Installation script finished. The setup should now be complete and correct."(base) wxf@wxf-R8280:/data1/slurm_prj/org-server-setup$
