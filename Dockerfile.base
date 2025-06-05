@@ -1,50 +1,55 @@
+# Dockerfile.base
 FROM nvcr.io/nvidia/cuda-dl-base:25.03-cuda12.8-runtime-ubuntu24.04
 
-# 安装基本工具
+# 安装必要的工具
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     curl \
     wget \
     git \
     sudo \
-    && rm -rf /var/lib/apt/lists/*
+    python3-pip \
+    python3-venv \
+    nodejs \
+    npm \
+    openssh-server \
+    tmux \
+    htop \
+    vim \
+    nano \
+    less \
+    net-tools \
+    iputils-ping \
+ && rm -rf /var/lib/apt/lists/*
 
-# 安装 Miniconda
-ENV CONDA_DIR /opt/conda
+# 配置SSH服务
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+# 安装Miniconda
+ENV CONDA_DIR=/opt/conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
-    && bash miniconda.sh -b -p $CONDA_DIR \
-    && rm miniconda.sh
+ && bash miniconda.sh -b -p $CONDA_DIR \
+ && rm miniconda.sh
+ENV PATH=$CONDA_DIR/bin:$PATH
 
-# 将 conda 添加到 PATH
-ENV PATH $CONDA_DIR/bin:$PATH
-
-# 创建并配置 conda 环境
-RUN conda init bash \
-    && . /opt/conda/etc/profile.d/conda.sh \
-    && conda create -n py312 python=3.12 -y \
-    && conda activate py312 \
-    && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 \
-    && conda install -y \
-        numpy \
-        pandas \
-        matplotlib \
-    && conda clean -afy
-
-# 安装Docker
-RUN apt-get update && apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y docker-ce docker-ce-cli containerd.io \
-    && rm -rf /var/lib/apt/lists/*
+# 创建Conda环境
+RUN conda init bash && \
+    conda create -n py312 python=3.12 -y && \
+    /bin/bash -c "source $CONDA_DIR/etc/profile.d/conda.sh && conda activate py312 && \
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 && \
+        conda install -y numpy pandas matplotlib && \
+        pip install pylint autopep8 black jupyter ipykernel && \
+        conda clean -afy"
 
 # 设置工作目录
 WORKDIR /workspace
 
-# 设置默认命令
-CMD ["bash"]
+# 复制入口脚本
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/sbin/sshd", "-D"]

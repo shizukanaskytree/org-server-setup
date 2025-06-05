@@ -1,4 +1,5 @@
 #!/bin/bash
+# install.sh (v6 - The Final Fix)
 
 # 设置错误处理
 set -e
@@ -10,115 +11,127 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 检查必要的命令是否存在
-for cmd in docker nvidia-smi; do
-    if ! command -v $cmd &> /dev/null; then
-        echo "Error: $cmd is not installed"
-        exit 1
-    fi
-done
-
 # 创建必要的目录
-mkdir -p /opt/docker_shells
-mkdir -p /data1/org
+echo "Creating necessary directories..."
+mkdir -p /opt/docker_images
+mkdir -p /data1/org/user_workspaces
 
-# 配置用户命名空间映射
-echo "Configuring user namespace mappings..."
-for i in {1..4}; do
-    # 检查用户是否存在
-    if ! id "user${i}" &>/dev/null; then
-        echo "Error: user${i} does not exist"
-        exit 1
+# 创建用户并配置
+for i in {1..3}; do
+    username="user${i}"
+    user_home="/home/$username"
+
+    # 用 -r 选项确保完全删除旧用户
+    if id "$username" &>/dev/null; then
+        userdel -r "$username" 2>/dev/null || true
     fi
 
-    # 配置subuid/subgid映射
-    usermod --add-subuids 100000-165535 --add-subgids 100000-165535 user${i}
+    useradd -m -s /bin/bash "$username"
+    echo "Created user: $username"
 
-    # 确保用户主目录存在并设置正确的权限
-    mkdir -p /home/user${i}
-    chown user${i}:user${i} /home/user${i}
-    chmod 700 /home/user${i}
+    password="$(openssl rand -base64 12 | tr -d '=')"
+    echo "$username:$password" | chpasswd
+    echo "Password for $username: $password"
 
-    # 创建用户数据目录并设置权限
-    mkdir -p /data1/org/user${i}_data
-    chown user${i}:user${i} /data1/org/user${i}_data
-    chmod 700 /data1/org/user${i}_data
+    usermod -aG docker "$username"
 
-    # 确保用户在docker组中
-    usermod -aG docker user${i}
+    user_work_dir="/data1/org/user_workspaces/$username"
+    mkdir -p "$user_work_dir"
+    chown "$username":"$username" "$user_work_dir"
+    chmod 700 "$user_work_dir"
+
+    ln -sf "$user_work_dir" "$user_home/work"
+
+    docker_name="${username}-container"
+    cat > "$user_home/.bash_profile" <<EOF
+if [ -z "\$INSIDE_DOCKER" ]; then
+    echo "You are on the host. To enter your Docker container, run:"
+    echo "docker exec -it ${docker_name} bash --login"
+fi
+EOF
+    chown "$username":"$username" "$user_home/.bash_profile"
+
+    # 在宿主机上为用户创建SSH密钥
+    mkdir -p "$user_home/.ssh"
+    chown "$username":"$username" "$user_home/.ssh"
+    chmod 700 "$user_home/.ssh"
+    if [ ! -f "$user_home/.ssh/id_ed25519" ]; then
+        echo "Generating SSH key for host user $username..."
+        sudo -u "$username" ssh-keygen -t ed25519 -f "$user_home/.ssh/id_ed25519" -N ""
+    fi
 done
-
-# 重启Docker服务以应用命名空间配置
-systemctl restart docker
 
 # 构建基础镜像
 echo "Building base environment image..."
 docker build -t base-env -f Dockerfile.base .
 
 # 为每个用户创建镜像
-echo "Creating user-specific images..."
-for i in {1..4}; do
-    # 创建用户目录
-    mkdir -p /opt/docker_images/user${i}
+for i in {1..3}; do
+    username="user${i}"
+    uid=$(id -u "$username")
+    gid=$(id -g "$username")
+    user_pubkey=$(cat "/home/$username/.ssh/id_ed25519.pub")
 
-    # 创建用户Dockerfile
-    sed "s/USERNAME/user${i}/" Dockerfile.user.template > /opt/docker_images/user${i}/Dockerfile
+    echo "Creating image for $username (UID=$uid, GID=$gid)..."
+    image_dir="/opt/docker_images/$username"
+    mkdir -p "$image_dir"
+    dockerfile_path="$image_dir/Dockerfile"
 
-    # 构建用户镜像
-    docker build -t user${i}-env /opt/docker_images/user${i}
+    # --- [最终修正] ---
+    # 删除了所有的 `USER` 指令。让容器以 root 身份启动 sshd 服务。
+    cat > "$dockerfile_path" <<EOF
+# User-specific Dockerfile (Final Version)
+FROM base-env
+
+# 创建用户和组 (以 root 权限)
+RUN groupadd -g ${gid} ${username} \\
+    && useradd -u ${uid} -g ${gid} -m -s /bin/bash ${username} \\
+    && echo "${username} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${username} \\
+    && chmod 0440 /etc/sudoers.d/${username}
+
+# 创建用户的 SSH 环境 (仍然以 root 权限)
+RUN mkdir -p /home/${username}/.ssh && \\
+    echo "${user_pubkey}" > /home/${username}/.ssh/authorized_keys && \\
+    chown -R ${uid}:${gid} /home/${username}/.ssh && \\
+    chmod 700 /home/${username}/.ssh && \\
+    chmod 600 /home/${username}/.ssh/authorized_keys
+
+# 不再需要 USER, WORKDIR, ENV 指令，sshd 会自动处理
+EOF
+
+    # 构建命令
+    docker build -t "${username}-env" "$image_dir"
 done
 
-# 复制shell脚本
-echo "Setting up Docker shell scripts..."
-cp create_user_docker_shells.sh /opt/docker_shells/
-chmod +x /opt/docker_shells/create_user_docker_shells.sh
+# 创建并启动用户容器
+for i in {1..3}; do
+    username="user${i}"
+    docker_name="${username}-container"
+    ssh_port=$((2200 + i))
 
-# 运行设置脚本
-/opt/docker_shells/create_user_docker_shells.sh
+    case $i in
+        1) gpu_device="0" ;;
+        2) gpu_device="1" ;;
+        3) gpu_device="2" ;;
+    esac
 
-# 确保Docker组权限正确
-echo "Configuring Docker group permissions..."
-for i in {1..4}; do
-    usermod -aG docker user${i}
-done
-
-# 设置用户主目录权限
-echo "Setting up home directory permissions..."
-for i in {1..4}; do
-    chmod 700 /home/user${i}
-done
-
-# 设置/data1目录权限，确保只有root可以访问
-chmod 755 /data1
-chown root:root /data1
-
-# 验证安装
-echo "Verifying installation..."
-for i in {1..4}; do
-    echo "Testing user${i} environment..."
-
-    # 测试容器创建
-    if ! docker run --rm --gpus '"device='$((i-1))'"' user${i}-env nvidia-smi &>/dev/null; then
-        echo "Error: Failed to create test container for user${i}"
-        exit 1
+    if docker ps -a --format '{{.Names}}' | grep -q "^${docker_name}$"; then
+        docker rm -f "$docker_name" >/dev/null 2>&1 || true
     fi
 
-    # 测试数据目录权限
-    if [ "$(stat -c %a /data1/org/user${i}_data)" != "700" ]; then
-        echo "Error: Incorrect permissions for user${i} data directory"
-        exit 1
-    fi
+    echo "Creating container for $username on GPU $gpu_device, SSH port $ssh_port"
+    docker run -dit \
+        --name "$docker_name" \
+        --hostname "${username}-session" \
+        --restart unless-stopped \
+        --gpus "device=$gpu_device" \
+        --cpus=8 \
+        --memory=64g \
+        --ipc=host \
+        -v "/data1/org/user_workspaces/$username:/home/$username/work" \
+        -p "${ssh_port}:22" \
+        "${username}-env"
+        # 注意：这里不再需要 CMD，因为它已经在 base Dockerfile 中定义了
 done
 
-echo "Installation completed successfully!"
-echo "Users will now be automatically placed in their Docker containers upon login."
-echo "Data isolation is enforced in /data1/org directory."
-echo ""
-echo "Please note:"
-echo "1. Each user has been assigned a specific GPU"
-echo "2. User data is isolated in /data1/org/userX_data"
-echo "3. Container security features are enabled"
-echo "4. Resource limits are configured"
-echo ""
-echo "To verify the setup, try logging in as any user:"
-echo "ssh user1@localhost  # Replace with your server address"
+echo "Installation script finished. The setup should now be complete and correct."
