@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh (v6 - The Final Fix)
+# install.sh (v7 - DooD Enabled)
 
 # 设置错误处理
 set -e
@@ -10,6 +10,14 @@ if [ "$EUID" -ne 0 ]; then
     echo "Please run as root"
     exit 1
 fi
+
+# 获取宿主机上 docker 组的 GID
+DOCKER_HOST_GID=$(getent group docker | cut -d: -f3)
+if [ -z "$DOCKER_HOST_GID" ]; then
+    echo "Error: docker group not found on host. Please install Docker properly."
+    exit 1
+fi
+echo "Host Docker group GID is: $DOCKER_HOST_GID"
 
 # 创建必要的目录
 echo "Creating necessary directories..."
@@ -77,26 +85,25 @@ for i in {1..3}; do
     mkdir -p "$image_dir"
     dockerfile_path="$image_dir/Dockerfile"
 
-    # --- [最终修正] ---
-    # 删除了所有的 `USER` 指令。让容器以 root 身份启动 sshd 服务。
     cat > "$dockerfile_path" <<EOF
-# User-specific Dockerfile (Final Version)
+# User-specific Dockerfile (DooD Version)
 FROM base-env
 
-# 创建用户和组 (以 root 权限)
+# 创建与宿主机 docker 组 GID 相同的组
+RUN groupadd -g ${DOCKER_HOST_GID} docker_host
+
+# 创建用户和组，并将其加入 docker_host 组
 RUN groupadd -g ${gid} ${username} \\
-    && useradd -u ${uid} -g ${gid} -m -s /bin/bash ${username} \\
+    && useradd -u ${uid} -g ${gid} -m -s /bin/bash -G docker_host ${username} \\
     && echo "${username} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${username} \\
     && chmod 0440 /etc/sudoers.d/${username}
 
-# 创建用户的 SSH 环境 (仍然以 root 权限)
+# 创建用户的 SSH 环境
 RUN mkdir -p /home/${username}/.ssh && \\
     echo "${user_pubkey}" > /home/${username}/.ssh/authorized_keys && \\
     chown -R ${uid}:${gid} /home/${username}/.ssh && \\
     chmod 700 /home/${username}/.ssh && \\
     chmod 600 /home/${username}/.ssh/authorized_keys
-
-# 不再需要 USER, WORKDIR, ENV 指令，sshd 会自动处理
 EOF
 
     # 构建命令
@@ -129,9 +136,9 @@ for i in {1..3}; do
         --memory=64g \
         --ipc=host \
         -v "/data1/org/user_workspaces/$username:/home/$username/work" \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         -p "${ssh_port}:22" \
         "${username}-env"
-        # 注意：这里不再需要 CMD，因为它已经在 base Dockerfile 中定义了
 done
 
-echo "Installation script finished. The setup should now be complete and correct."
+echo "Installation script finished. Users can now use Docker inside their containers."

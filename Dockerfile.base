@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y \
     less \
     net-tools \
     iputils-ping \
+    docker.io \
  && rm -rf /var/lib/apt/lists/*
+
 
 # 配置SSH服务
 RUN mkdir /var/run/sshd && \
